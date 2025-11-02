@@ -23,12 +23,10 @@ function App() {
     if (!canvas) return null
 
     const rect = canvas.getBoundingClientRect()
-    
-    // Get coordinates relative to canvas element
+
     const x = clientX - rect.left
     const y = clientY - rect.top
 
-    // Account for pan offset
     const gridX = (x / rect.width) * GRID_SIZE + panX
     const gridY = (y / rect.height) * GRID_SIZE + panY
 
@@ -61,18 +59,14 @@ function App() {
     canvas.height = displaySize * dpr
     ctx.scale(dpr, dpr)
 
-    // Translate canvas for panning
     ctx.translate(-currentPanX * currentZoom, -currentPanY * currentZoom)
 
-    // Fill with white
     ctx.fillStyle = '#ffffff'
     ctx.fillRect(0, 0, displaySize, displaySize)
 
-    // Draw grid lines - cover the entire display area
     ctx.strokeStyle = '#f0f0f0'
     ctx.lineWidth = 0.5
-    
-    // Draw vertical lines
+
     for (let i = 0; i <= GRID_SIZE; i++) {
       const x = i * currentZoom
       ctx.beginPath()
@@ -80,8 +74,6 @@ function App() {
       ctx.lineTo(x, displaySize)
       ctx.stroke()
     }
-
-    // Draw horizontal lines
     for (let j = 0; j <= GRID_SIZE; j++) {
       const y = j * currentZoom
       ctx.beginPath()
@@ -89,15 +81,11 @@ function App() {
       ctx.lineTo(displaySize, y)
       ctx.stroke()
     }
-
-    // Draw colored pixels
     Object.entries(pixelMap).forEach(([key, pixelColor]) => {
       const [x, y] = key.split(',').map(Number)
       ctx.fillStyle = pixelColor
       ctx.fillRect(x * currentZoom, y * currentZoom, currentZoom, currentZoom)
     })
-
-    // Draw hovered pixel highlight (light blue)
     if (hovered) {
       const [x, y] = hovered.split(',').map(Number)
       ctx.strokeStyle = '#4a90e2'
@@ -105,7 +93,6 @@ function App() {
       ctx.strokeRect(x * currentZoom, y * currentZoom, currentZoom, currentZoom)
     }
 
-    // Draw selected pixel border (darker but thinner)
     if (selected) {
       const [x, y] = selected.split(',').map(Number)
       ctx.strokeStyle = '#333333'
@@ -120,7 +107,6 @@ function App() {
 
   useEffect(() => {
     const handleGlobalWheel = (e: WheelEvent) => {
-      // Prevent page scroll when scrolling over the page
       e.preventDefault()
     }
 
@@ -131,7 +117,7 @@ function App() {
   }, [])
 
   const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (isPanning) return // Don't select if panning
+    if (isPanning) return
     const coords = getPixelCoords(e.clientX, e.clientY)
     if (!coords) return
     const [pixelX, pixelY] = coords
@@ -145,7 +131,6 @@ function App() {
     const [pixelX, pixelY] = coords
     const key = `${pixelX},${pixelY}`
     
-    // Apply current color to the clicked pixel
     setPixels((prev) => ({
       ...prev,
       [key]: color,
@@ -155,10 +140,8 @@ function App() {
 
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (isPanning) {
-      // Only allow panning if zoomed in enough
       if (zoom <= 1) return
 
-      // Handle panning
       const deltaX = e.clientX - panStartX
       const deltaY = e.clientY - panStartY
       
@@ -169,8 +152,6 @@ function App() {
       let newPanX = panStartPanX - (deltaX / rect.width) * GRID_SIZE
       let newPanY = panStartPanY - (deltaY / rect.height) * GRID_SIZE
       
-      // Constrain panning to keep entire grid visible
-      // The visible area in grid coordinates is GRID_SIZE / zoom
       const visibleGridSize = GRID_SIZE / zoom
       const maxPanX = GRID_SIZE - visibleGridSize
       const maxPanY = GRID_SIZE - visibleGridSize
@@ -227,15 +208,12 @@ function App() {
     const rect = canvas.getBoundingClientRect()
     const mouseX = e.clientX - rect.left
     const mouseY = e.clientY - rect.top
-    
-    // Get the grid coordinates under the cursor
     const gridX = (mouseX / rect.width) * GRID_SIZE + panX
     const gridY = (mouseY / rect.height) * GRID_SIZE + panY
     
     setZoom((prevZoom) => {
       const newZoom = Math.max(1, Math.min(20, prevZoom + direction))
-      
-      // Adjust pan so the point under cursor stays under cursor
+
       setPanX(() => {
         const newPanX = gridX - (mouseX / rect.width) * GRID_SIZE
         return Math.max(0, Math.min(GRID_SIZE - GRID_SIZE / newZoom, newPanX))
